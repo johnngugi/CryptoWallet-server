@@ -28,10 +28,15 @@ const createWallet = async (user) => {
     const wallet = new Wallet();
     wallet.currency = currency.id;
     wallet.address = account.address;
-    wallet.encryptedKey = encryptedAccount;
+    wallet.encryptedKey = JSON.stringify(encryptedAccount);
     wallet.user = user.id;
 
-    await wallet.save();
+    try {
+        return wallet.save();
+    } catch (error) {
+        console.error(error);
+        throw error;
+    }
 };
 
 const getBalance = async (address) => {

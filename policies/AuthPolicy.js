@@ -16,38 +16,32 @@ module.exports = {
         const { error } = Joi.validate(req.body, schema);
 
         if (error) {
-            console.log(error.details[0].context);
             switch (error.details[0].context.key) {
                 case 'firstName':
-                    res.status(400).send({
+                    return res.status(400).send({
                         error: `field firstName must contain only alpha numeric charachters, minimum length of 3 and maximum length of 30`
                     });
-                    break;
                 case 'lastName':
-                    res.status(400).send({
+                    return res.status(400).send({
                         error: `field lastName must contain only alpha numeric charachters, minimum length of 3 and maximum length of 30`
                     });
-                    break;
                 case 'emailAddress':
-                    res.status(400).send({ error: 'Invalid email' });
-                    break;
+                    return res.status(400).send({ error: 'Invalid email' });
                 case 'password':
                     if (error.details[0].context.peer) {
-                        res.status(400).send({
+                        return res.status(400).send({
                             error: `Please provide confirmation password`
                         });
                     }
-                    res.status(400).send({
+                    return res.status(400).send({
                         error: `Password must contain at least 8 charachters and at most 26 charachters, at least one lowercase and uppercase charachter, at least one number and at least one symbol`
                     });
-                    break;
                 case 'password_confirm':
-                    res.status(400).send({
+                    return res.status(400).send({
                         error: 'Passwords don\'t match'
                     });
-                    break;
                 default:
-                    res.status(400).send({ error: 'invalid registration information' });
+                    return res.status(400).send({ error: 'invalid registration information' });
             }
         } else {
             next();

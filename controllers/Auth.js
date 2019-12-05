@@ -28,20 +28,25 @@ module.exports = {
         }
 
         try {
-            ethereum.createWallet(result);
+            await ethereum.createWallet(result);
         } catch (error) {
             // TODO: log errors instead of printing
             console.error(error);
+            return res.status(500).send({
+                error: 'Something went wrong'
+            });
         }
 
         const token = authentication.jwtSignUser(user);
-        let userResult = {
-            firstName: result.firstName,
-            lastName: result.lastName,
-            emailAddress: result.emailAddress,
-            token
-        }
-        res.send(userResult);
+
+        return res.send({
+            user: {
+                firstName: result.firstName,
+                lastName: result.lastName,
+                emailAddress: result.emailAddress,
+                token
+            }
+        });
     },
 
 
@@ -65,15 +70,14 @@ module.exports = {
             }
 
             const token = authentication.jwtSignUser(user);
-            let userResult = {
-                firstName: user.firstName,
-                lastName: user.lastName,
-                emailAddress: user.emailAddress,
-                token
-            }
 
             return res.send({
-                userResult,
+                user: {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    emailAddress: user.emailAddress,
+                    token
+                }
             });
         } catch (error) {
             console.error(error);

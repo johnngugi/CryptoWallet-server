@@ -8,7 +8,11 @@ const getRecord = (overrides = {}, qty = 1) => {
             firstName = chance.first(),
             lastName = chance.last(),
             emailAddress = chance.email(),
-            password = chance.word()
+            password = chance.string({ length: 8, alpha: true }) +
+            chance.character({ symbols: true }) +
+            chance.character({ numeric: true }) +
+            chance.character({ casing: 'upper' }) +
+            chance.character({ casing: 'lower' })
         } = overrides;
 
         return {

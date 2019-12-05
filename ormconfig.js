@@ -1,0 +1,20 @@
+var { DB_HOST, DB_USER, DB_PASS, DB_NAME } = require('./config');
+
+module.exports = {
+    'name': 'default',
+    'type': 'mysql',
+    'host': `${DB_HOST}`,
+    'port': 3306,
+    'username': `${DB_USER}`,
+    'password': `${DB_PASS}`,
+    'database': `${DB_NAME}`,
+    'entities': [
+        __dirname + '/entities/index.js'
+    ],
+    'migrations': [
+        'migrations/*.js'
+    ],
+    'cli': {
+        'migrationsDir': 'migrations'
+    }
+}

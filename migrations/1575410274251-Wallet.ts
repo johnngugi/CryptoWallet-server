@@ -23,7 +23,7 @@ export class Wallet1575410274251 implements MigrationInterface {
                 },
                 {
                     name: "encryptedKey",
-                    type: 'json',
+                    type: 'varchar',
                 },
                 {
                     name: "user",

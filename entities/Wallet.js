@@ -18,7 +18,7 @@ module.exports = new EntitySchema({
             type: 'varchar',
         },
         encryptedKey: {
-            type: 'json'
+            type: 'varchar'
         },
     },
     relations: {
@@ -29,7 +29,8 @@ module.exports = new EntitySchema({
                 name: 'currency',
                 referencedColumnName: 'id'
             },
-            cascade: true
+            cascade: true,
+            // onDelete: "CASCADE"
         },
         user: {
             target: 'User',
@@ -38,7 +39,8 @@ module.exports = new EntitySchema({
                 referencedColumnName: 'id'
             },
             type: 'many-to-one',
-            cascade: true
+            cascade: true,
+            // onDelete: "CASCADE"
         },
     }
 });

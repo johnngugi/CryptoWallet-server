@@ -1,24 +1,6 @@
 const { User } = require('../models/User');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
-const { authentication } = require('../config');
 const ethereum = require('../currencies/ethereum');
-
-function jwtSignUser(user) {
-    const ONE_WEEK = 60 * 60 * 24 * 7;
-    return jwt.sign({ id: user.id, email: user.emailAddress }, authentication.JWT_SECRET, {
-        expiresIn: ONE_WEEK
-    });
-}
-
-function comparePassword(password, hashedPassword) {
-    return bcrypt.compare(password, hashedPassword);
-}
-
-function hashPassword(user) {
-    const saltRounds = 10;
-    return bcrypt.hash(user.password, saltRounds);
-}
+const { authentication, passwords } = require('../utils');
 
 module.exports = {
     async register(req, res) {
@@ -29,7 +11,7 @@ module.exports = {
         user.emailAddress = req.body.emailAddress;
         user.password = req.body.password;
 
-        const hashedPassword = await hashPassword(user);
+        const hashedPassword = await passwords.hashPassword(user.password);
         user.password = hashedPassword;
 
         let result;
@@ -52,7 +34,7 @@ module.exports = {
             console.error(error);
         }
 
-        const token = jwtSignUser(user);
+        const token = authentication.jwtSignUser(user);
         let userResult = {
             firstName: result.firstName,
             lastName: result.lastName,
@@ -75,14 +57,14 @@ module.exports = {
                 return;
             }
 
-            const isPasswordValid = await comparePassword(password, user.password);
+            const isPasswordValid = await passwords.comparePassword(password, user.password);
             if (!isPasswordValid) {
                 return res.status(403).send({
                     error: 'Incorrect login information'
                 });
             }
 
-            const token = jwtSignUser(user);
+            const token = authentication.jwtSignUser(user);
             let userResult = {
                 firstName: user.firstName,
                 lastName: user.lastName,
@@ -91,7 +73,7 @@ module.exports = {
             }
 
             return res.send({
-                user: userResult,
+                userResult,
             });
         } catch (error) {
             console.error(error);

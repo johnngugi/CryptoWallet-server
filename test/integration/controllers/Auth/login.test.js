@@ -1,21 +1,9 @@
-const chai = require('chai');
-const chaiHttp = require('chai-http');
-const http = require('http');
 const { createConnection } = require('typeorm');
 const app = require('../../../../app');
 
 const userProvider = require('../../../fixtures/user');
 const { passwords } = require('../../../../utils');
 const { User } = require('../../../../models').User;
-
-const port = 3001;
-app.set('port', port);
-let server = http.createServer(app);
-server.listen(port);
-
-const { expect } = chai;
-
-chai.use(chaiHttp);
 
 describe('login test suite', () => {
     before(async function () {

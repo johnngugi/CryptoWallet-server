@@ -64,7 +64,7 @@ var Wallet1575410274251 = /** @class */ (function () {
                                 },
                                 {
                                     name: 'encryptedKey',
-                                    type: 'varchar'
+                                    type: 'json'
                                 },
                                 {
                                     name: 'user',

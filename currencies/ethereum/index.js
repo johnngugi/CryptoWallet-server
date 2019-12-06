@@ -1,5 +1,5 @@
 const Web3 = require('web3');
-const Tx = require('ethereumjs-tx');
+const Tx = require('ethereumjs-tx').Transaction;
 const axios = require('axios');
 const { NODE_ENV, ethereum } = require('../../config');
 const { Wallet } = require('../../models/Wallet');
@@ -17,7 +17,7 @@ else {
     url = testnet;
 }
 
-const web3 = new Web3(new Web3.providers.HttpProvider(url));
+const web3 = new Web3(url);
 
 const createWallet = async (user) => {
     const currency = await Currency.findOne({ shortName: 'ETH' });
@@ -48,7 +48,7 @@ const getBalance = async (address) => {
 };
 
 const getGasPrices = async () => {
-    let response = await axios.get('https://ethgasstation.info/json/ethgasAPI.json')
+    let response = await axios.get('https://ethgasstation.info/json/ethgasAPI.json');
     let prices = {
         low: response.data.safeLow / 10,
         medium: response.data.average / 10,
@@ -60,10 +60,10 @@ const getGasPrices = async () => {
 const sendValue = async (from, to, value, privateKey) => {
     const txCount = await web3.eth.getTransactionCount(from);
     const nonce = web3.utils.toHex(txCount);
-    to = Buffer.from(to, 'hex');
     value = web3.utils.toHex(web3.utils.toWei(value, 'ether'));
     const gasLimit = web3.utils.toHex(21000);
-    const gasPrice = web3.utils.toHex(web3.utils.toWei(getGasPrices().low, 'gwei'));
+    const gasPrices = await getGasPrices();
+    const gasPrice = web3.utils.toHex(web3.utils.toWei(gasPrices.low.toString(), 'gwei'));
 
     const txData = {
         nonce,
@@ -73,17 +73,18 @@ const sendValue = async (from, to, value, privateKey) => {
         gasPrice,
     };
 
+    const privateKeyBuffer = Buffer.from(privateKey.substr(2), 'hex');
     const tx = new Tx(txData, { chain: 'rinkeby' });
-    tx.sign(Buffer.from(privateKey, 'hex'));
+    tx.sign(privateKeyBuffer);
 
     const serialized = tx.serialize();
     const raw = '0x' + serialized.toString('hex');
 
-    return web3.eth.sendSignedTransaction(raw);
+    return await web3.eth.sendSignedTransaction(raw);
 };
 
 const getPrivateKey = async (encryptedKey, userPassword) => {
-    return web3.eth.accounts.decrypt(encryptedKey, userPassword).privateKey;
+    return web3.eth.accounts.decrypt(encryptedKey, userPassword);
 };
 
 module.exports = {

@@ -1,5 +1,6 @@
 const { createConnection } = require('typeorm');
 const sinon = require('sinon');
+const axios = require('axios');
 const userProvider = require('../../../fixtures/user');
 const currenciesProvider = require('../../../fixtures/currency');
 const { web3 } = require('../../../../currencies/ethereum');
@@ -18,7 +19,8 @@ const registerUser = async () => {
         });
 };
 
-describe('Ethereum get balance controller', () => {
+describe('Ethereum send ethereum controller', () => {
+
     let connection;
     let bearerToken;
     before(async function () {
@@ -37,7 +39,7 @@ describe('Ethereum get balance controller', () => {
 
         const currencies = currenciesProvider.getRecords();
         let results = await Promise.all([createDbRecord('currency', currencies), registerUser()]);
-        let token = results[1].body.user.token;
+        const token = results[1].body.user.token;
         bearerToken = `Bearer ${token}`;
         await connection.query('PRAGMA foreign_keys=ON');
     });
@@ -47,58 +49,40 @@ describe('Ethereum get balance controller', () => {
     });
 
     beforeEach(() => {
-        this.web3 = sinon.stub(web3.eth, 'getBalance').resolves('1000000000000');
+        this.gasPrices = sinon.stub(axios, 'get').resolves({
+            data: {
+                safeLow: 10,
+                average: 31,
+                fast: 100
+            }
+        });
+        this.getBalance = sinon.stub(web3.eth, 'getBalance').resolves('1000000000000');
+        this.transactionCount = sinon.stub(web3.eth, 'getTransactionCount').resolves(0);
+        this.sendSignedTransaction = sinon.stub(web3.eth, 'sendSignedTransaction').
+            resolves('0x######################');
     });
 
     afterEach(() => {
-        this.web3.restore();
+        this.getBalance.restore();
+        this.sendSignedTransaction.restore();
+        this.gasPrices.restore();
     });
 
-    describe('#POST /api/eth/balance', () => {
+    describe('#POST /api/eth/send', () => {
 
-        it('should respond with status 200 on successful request', async () => {
+        it('should respond with status 200 on success', async () => {
             const res = await chai.request(app)
-                .post('/api/eth/balance')
+                .post('/api/eth/send')
                 .set('Authorization', bearerToken)
                 .send({
                     currency: 'ETH',
+                    value: '10',
+                    to: '0xa45C6d521BaEE7C0fDfEA932a3Cca5f537410d43'
                 });
 
             expect(res).to.have.status(200);
         });
 
-        it('should respond with 403 when unauthorized', async () => {
-            const res = await chai.request(app)
-                .post('/api/eth/balance')
-                .send({
-                    currency: 'ETH',
-                });
-
-            expect(res).to.have.status(403);
-        });
-
-        it('should respond with json object on successful request', async () => {
-            const res = await chai.request(app)
-                .post('/api/eth/balance')
-                .set('Authorization', bearerToken)
-                .send({
-                    currency: 'ETH',
-                });
-
-            expect(res.body).to.be.a('object');
-            expect(res.body).to.have.property('currency');
-            expect(res.body.currency).to.be.a('string');
-            expect(res.body.currency).to.not.equal('');
-
-            expect(res.body).to.have.property('unit');
-            expect(res.body.unit).to.be.a('string');
-            expect(res.body.unit).to.not.equal('');
-
-            expect(res.body).to.have.property('balance');
-            expect(res.body.balance).to.be.a('number');
-            expect(res.body.balance).to.not.equal('');
-            expect(res.body.balance).to.be.above(0);
-        });
-
     });
+
 });

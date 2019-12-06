@@ -26,7 +26,6 @@
     "mysql2": "^2.0.1",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
-    "sinon": "^7.5.0",
     "sqlite3": "^4.1.1",
     "typeorm": "^0.2.20",
     "web3": "^1.2.4"
@@ -41,6 +40,7 @@
     "lint-staged": "^9.5.0",
     "mocha": "^6.2.2",
     "nodemon": "^2.0.1",
+    "sinon": "^7.5.0",
     "yorkie": "^2.0.0"
   },
   "gitHooks": {

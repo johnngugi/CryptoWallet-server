@@ -1,18 +1,9 @@
-const { createConnection, getConnection } = require('typeorm');
+const { createConnection } = require('typeorm');
 const { User } = require('../../../../models');
 const app = require('../../../../app');
 const userProvider = require('../../../fixtures/user');
 const currenciesProvider = require('../../../fixtures/currency');
-
-const createDbRecord = async (modelName, records) => {
-    return await getConnection()
-        .getRepository(modelName)
-        .createQueryBuilder()
-        .insert()
-        .into(modelName)
-        .values(records)
-        .execute();
-};
+const { createDbRecord } = require('../../../utils');
 
 describe('user registration test suite', () => {
     let connection;

@@ -15,30 +15,43 @@ const getUserWallet = async (userId, currency) => {
 };
 
 const getWalletBalance = async (userId, currency) => {
-    const wallet = await getUserWallet(userId, currency);
-    if (wallet) {
-        const balance = await ethereum.getBalance(wallet.address);
-        return {
-            currency: wallet.currency.name,
-            address: wallet.address,
-            unit: 'wei',
-            balance: parseInt(balance, 10)
-        };
+    try {
+        const wallet = await getUserWallet(userId, currency);
+        if (wallet) {
+            const balance = await ethereum.getBalance(wallet.address);
+            return {
+                currency: wallet.currency.name,
+                address: wallet.address,
+                unit: 'wei',
+                balance: parseInt(balance, 10)
+            };
+        } else {
+            let error = new Error('No wallet found for currency associated with this user');
+            error.code = 'ER_NO_WALLET';
+            throw error;
+        }
+    } catch (error) {
+        console.error(error);
+        throw error;
     }
-    let error = new Error('No wallet found for currency associated with this user');
-    error.code = 'ER_NO_WALLET';
-    throw error;
 };
 
 const getPrivateKey = async (userId, userPassword, currency) => {
-    const wallet = await getUserWallet(userId, currency);
-    if (wallet) {
-        const encryptedKey = wallet.encryptedKey;
-        return ethereum.getPrivateKey(encryptedKey, userPassword);
+    try {
+        const wallet = await getUserWallet(userId, currency);
+        if (wallet) {
+            const encryptedKey = wallet.encryptedKey;
+            const decryptedKey = await ethereum.getPrivateKey(encryptedKey, userPassword);
+            return decryptedKey.privateKey;
+        } else {
+            let error = new Error('No wallet found for currency associated with this user');
+            error.code = 'ER_NO_WALLET';
+            throw error;
+        }
+    } catch (error) {
+        console.error(error);
+        throw error;
     }
-    let error = new Error('No wallet found for currency associated with this user');
-    error.code = 'ER_NO_WALLET';
-    throw error;
 };
 
 module.exports = {

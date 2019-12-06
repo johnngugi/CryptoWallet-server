@@ -37,7 +37,7 @@ module.exports = {
             });
         }
 
-        const token = authentication.jwtSignUser(user);
+        const token = await authentication.jwtSignUser(user);
 
         return res.send({
             user: {
@@ -69,7 +69,7 @@ module.exports = {
                 });
             }
 
-            const token = authentication.jwtSignUser(user);
+            const token = await authentication.jwtSignUser(user);
 
             return res.send({
                 user: {

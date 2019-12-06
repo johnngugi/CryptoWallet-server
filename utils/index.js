@@ -2,9 +2,9 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { authentication } = require('../config');
 
-function jwtSignUser(user) {
+async function jwtSignUser(user) {
     const ONE_WEEK = 60 * 60 * 24 * 7;
-    return jwt.sign({ id: user.id, email: user.emailAddress }, authentication.JWT_SECRET, {
+    return await jwt.sign({ id: user.id, email: user.emailAddress }, authentication.JWT_SECRET, {
         expiresIn: ONE_WEEK
     });
 }

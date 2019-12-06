@@ -7,8 +7,8 @@ module.exports = {
         const schema = Joi.object({
             firstName: Joi.string().alphanum().min(3).max(30).required(),
             lastName: Joi.string().alphanum().min(3).max(30).required(),
-            emailAddress: Joi.string().email(),
-            password: new PasswordComplexity(),
+            emailAddress: Joi.string().email().required(),
+            password: new PasswordComplexity().required(),
             password_confirm: Joi.ref('password'),
         })
             .with('password', 'password_confirm');

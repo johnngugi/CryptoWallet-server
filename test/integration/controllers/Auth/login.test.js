@@ -3,7 +3,7 @@ const app = require('../../../../app');
 
 const userProvider = require('../../../fixtures/user');
 const { passwords } = require('../../../../utils');
-const { User } = require('../../../../models').User;
+const { User } = require('../../../../models');
 
 const createUserAndSave = async (user) => {
     const hashedPassword = await passwords.hashPassword(user.password);
@@ -23,7 +23,8 @@ describe('login test suite', () => {
     before(async function () {
         connection = await createConnection({
             'type': 'sqlite',
-            'database': 'db.tests.sqlite',
+            'database': ':memory:',
+            'dropSchema': true,
             'synchronize': false,
             'logging': false,
             'entities': [
@@ -32,7 +33,6 @@ describe('login test suite', () => {
         });
         await connection.query('PRAGMA foreign_keys=OFF');
         await connection.synchronize();
-        await User.delete({});
     });
 
     beforeEach(async () => {

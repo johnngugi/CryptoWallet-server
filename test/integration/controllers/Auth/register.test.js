@@ -1,5 +1,5 @@
 const { createConnection, getConnection } = require('typeorm');
-const { User } = require('../../../../models').User;
+const { User } = require('../../../../models');
 const app = require('../../../../app');
 const userProvider = require('../../../fixtures/user');
 const currenciesProvider = require('../../../fixtures/currency');
@@ -19,7 +19,8 @@ describe('user registration test suite', () => {
     before(async function () {
         connection = await createConnection({
             'type': 'sqlite',
-            'database': 'db.tests.sqlite',
+            'database': ':memory:',
+            'dropSchema': true,
             'synchronize': false,
             'logging': false,
             'entities': [
@@ -28,7 +29,6 @@ describe('user registration test suite', () => {
         });
         await connection.query('PRAGMA foreign_keys=OFF');
         await connection.synchronize();
-        await User.delete({});
     });
 
     beforeEach(async () => {
@@ -74,19 +74,19 @@ describe('user registration test suite', () => {
             const userResult = res.body.user;
             expect(userResult).to.be.a('object');
             expect(userResult).to.have.property('firstName');
-            expect(userResult.firstName).to.not.equal(null);
+            expect(userResult.firstName).to.be.a('string');
             expect(userResult.firstName).to.not.equal('');
 
             expect(userResult).to.have.property('lastName');
-            expect(userResult.lastName).to.not.equal(null);
+            expect(userResult.lastName).to.be.a('string');
             expect(userResult.lastName).to.not.equal('');
 
             expect(userResult).to.have.property('emailAddress');
-            expect(userResult.emailAddress).to.not.equal(null);
+            expect(userResult.emailAddress).to.be.a('string');
             expect(userResult.emailAddress).to.not.equal('');
 
             expect(userResult).to.have.property('token');
-            expect(userResult.token).to.not.equal(null);
+            expect(userResult.token).to.be.a('string');
             expect(userResult.token).to.not.equal('');
 
         });

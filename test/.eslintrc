@@ -16,6 +16,7 @@
     "globals": {
         "assert": true,
         "chai": true,
-        "expect": true
+        "expect": true,
+        "app": true
     }
 }

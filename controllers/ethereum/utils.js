@@ -5,9 +5,7 @@ const ethereum = require('../../currencies/ethereum');
 const getUserWallet = async (userId, currency) => {
     return await getConnection()
         .getRepository(Wallet)
-        .createQueryBuilder()
-        .select('wallet')
-        .from(Wallet, 'wallet')
+        .createQueryBuilder('wallet')
         .innerJoinAndSelect('wallet.currency', 'currency')
         .where('wallet.user = :user AND currency.shortName = :shortName', {
             user: userId,

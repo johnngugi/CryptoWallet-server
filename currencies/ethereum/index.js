@@ -90,5 +90,6 @@ module.exports = {
     createWallet,
     getBalance,
     sendValue,
-    getPrivateKey
+    getPrivateKey,
+    web3
 }

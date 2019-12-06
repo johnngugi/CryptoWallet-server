@@ -22,7 +22,7 @@ const getWalletBalance = async (userId, currency) => {
             currency: wallet.currency.name,
             address: wallet.address,
             unit: 'wei',
-            balance
+            balance: parseInt(balance, 10)
         };
     }
     let error = new Error('No wallet found for currency associated with this user');

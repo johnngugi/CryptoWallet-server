@@ -1,6 +1,8 @@
 const { createConnection, getConnection } = require('typeorm');
+const sinon = require('sinon');
 const userProvider = require('../../../fixtures/user');
 const currenciesProvider = require('../../../fixtures/currency');
+const { web3 } = require('../../../../currencies/ethereum');
 
 const createDbRecord = async (modelName, records) => {
     return await getConnection()
@@ -27,7 +29,7 @@ const registerUser = async () => {
 
 describe('Ethereum get balance controller', () => {
     let connection;
-    let token;
+    let bearerToken;
     before(async function () {
         connection = await createConnection({
             'type': 'sqlite',
@@ -44,14 +46,27 @@ describe('Ethereum get balance controller', () => {
 
         const currencies = currenciesProvider.getRecords();
         let results = await Promise.all([createDbRecord('currency', currencies), registerUser()]);
-        token = results[1].body.user.token;
+        let token = results[1].body.user.token;
+        bearerToken = `Bearer ${token}`;
         await connection.query('PRAGMA foreign_keys=ON');
+    });
+
+    after(async () => {
+        await connection.close();
+    });
+
+    beforeEach(() => {
+        this.web3 = web3;
+        this.web3 = sinon.stub(web3.eth, 'getBalance').resolves('1000000000000');
+    });
+
+    afterEach(() => {
+        this.web3.restore();
     });
 
     describe('#POST /api/eth/balance', () => {
 
         it('should respond with status 200 on successful request', async () => {
-            const bearerToken = `Bearer ${token}`;
             const res = await chai.request(app)
                 .post('/api/eth/balance')
                 .set('Authorization', bearerToken)
@@ -62,10 +77,38 @@ describe('Ethereum get balance controller', () => {
             expect(res).to.have.status(200);
         });
 
-    });
+        it('should respond with 403 when unauthorized', async () => {
+            const res = await chai.request(app)
+                .post('/api/eth/balance')
+                .send({
+                    currency: 'ETH',
+                });
 
-    after(async () => {
-        await connection.close();
-    });
+            expect(res).to.have.status(403);
+        });
 
+        it('should respond with json object on successful request', async () => {
+            const res = await chai.request(app)
+                .post('/api/eth/balance')
+                .set('Authorization', bearerToken)
+                .send({
+                    currency: 'ETH',
+                });
+
+            expect(res.body).to.be.a('object');
+            expect(res.body).to.have.property('currency');
+            expect(res.body.currency).to.be.a('string');
+            expect(res.body.currency).to.not.equal('');
+
+            expect(res.body).to.have.property('unit');
+            expect(res.body.unit).to.be.a('string');
+            expect(res.body.unit).to.not.equal('');
+
+            expect(res.body).to.have.property('balance');
+            expect(res.body.balance).to.be.a('number');
+            expect(res.body.balance).to.not.equal('');
+            expect(res.body.balance).to.be.above(0);
+        });
+
+    });
 });

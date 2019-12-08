@@ -54,36 +54,27 @@ describe('Ethereum get balance controller', () => {
         this.web3.restore();
     });
 
-    describe('#POST /api/eth/balance', () => {
+    describe('#GET /api/eth/balance', () => {
 
         it('should respond with status 200 on successful request', async () => {
             const res = await chai.request(app)
-                .post('/api/eth/balance')
-                .set('Authorization', bearerToken)
-                .send({
-                    currency: 'ETH',
-                });
+                .get('/api/eth/balance')
+                .set('Authorization', bearerToken);
 
             expect(res).to.have.status(200);
         });
 
         it('should respond with 403 when unauthorized', async () => {
             const res = await chai.request(app)
-                .post('/api/eth/balance')
-                .send({
-                    currency: 'ETH',
-                });
+                .get('/api/eth/balance');
 
             expect(res).to.have.status(403);
         });
 
         it('should respond with json object on successful request', async () => {
             const res = await chai.request(app)
-                .post('/api/eth/balance')
-                .set('Authorization', bearerToken)
-                .send({
-                    currency: 'ETH',
-                });
+                .get('/api/eth/balance')
+                .set('Authorization', bearerToken);
 
             expect(res.body).to.be.a('object');
             expect(res.body).to.have.property('currency');

@@ -4,7 +4,7 @@ module.exports = {
     async balance(req, res) {
         let balance;
         try {
-            balance = await getWalletBalance(req.user.id, req.body.currency);
+            balance = await getWalletBalance(req.user.id, 'ETH');
             if (balance) {
                 return res.send(balance);
             }

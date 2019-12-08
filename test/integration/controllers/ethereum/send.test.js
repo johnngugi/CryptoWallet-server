@@ -56,7 +56,7 @@ describe('Ethereum send ethereum controller', () => {
                 fast: 100
             }
         });
-        this.getBalance = sinon.stub(web3.eth, 'getBalance').resolves('1000000000000');
+        this.getBalance = sinon.stub(web3.eth, 'getBalance').resolves('50000000000000000');
         this.transactionCount = sinon.stub(web3.eth, 'getTransactionCount').resolves(0);
         this.sendSignedTransaction = sinon.stub(web3.eth, 'sendSignedTransaction').
             resolves('0x######################');
@@ -64,6 +64,7 @@ describe('Ethereum send ethereum controller', () => {
 
     afterEach(() => {
         this.getBalance.restore();
+        this.transactionCount.restore();
         this.sendSignedTransaction.restore();
         this.gasPrices.restore();
     });
@@ -75,12 +76,43 @@ describe('Ethereum send ethereum controller', () => {
                 .post('/api/eth/send')
                 .set('Authorization', bearerToken)
                 .send({
-                    currency: 'ETH',
-                    value: '10',
+                    value: '0.01',
                     to: '0xa45C6d521BaEE7C0fDfEA932a3Cca5f537410d43'
                 });
 
             expect(res).to.have.status(200);
+        });
+
+        it('should respond with status 403 if unauthorized', async () => {
+            const res = await chai.request(app)
+                .post('/api/eth/send')
+                .send({
+                    value: '10',
+                    to: '0xa45C6d521BaEE7C0fDfEA932a3Cca5f537410d43'
+                });
+
+            expect(res).to.have.status(403);
+        });
+
+        it('should respond with 400 for missing or wrong request data', async () => {
+            const req = chai.request(app).keepOpen();
+
+            const responses = await Promise.all([
+                req.post('/api/eth/send').set('Authorization', bearerToken),
+                req.post('/api/eth/send').set('Authorization', bearerToken)
+                    .send({
+                        value: '0.01'
+                    }),
+                req.post('/api/eth/send').set('Authorization', bearerToken)
+                    .send({ to: '0xa45C6d521BaEE7C0fDfEA932a3Cca5f537410d43' }),
+                req.post('/api/eth/send').set('Authorization', bearerToken)
+                    .send({ to: '0xa45' })
+            ]);
+
+            expect(responses[0]).to.have.status(400);
+            expect(responses[1]).to.have.status(400);
+            expect(responses[2]).to.have.status(400);
+            req.close();
         });
 
     });

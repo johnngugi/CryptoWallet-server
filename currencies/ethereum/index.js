@@ -40,11 +40,7 @@ const createWallet = async (user) => {
 };
 
 const getBalance = async (address) => {
-    try {
-        return web3.eth.getBalance(address);
-    } catch (error) {
-        console.error(error);
-    }
+    return web3.eth.getBalance(address);
 };
 
 const getGasPrices = async () => {
@@ -58,12 +54,24 @@ const getGasPrices = async () => {
 };
 
 const sendValue = async (from, to, value, privateKey) => {
-    const txCount = await web3.eth.getTransactionCount(from);
-    const nonce = web3.utils.toHex(txCount);
-    value = web3.utils.toHex(web3.utils.toWei(value, 'ether'));
-    const gasLimit = web3.utils.toHex(21000);
+    const gasLimitAsInt = 21000;
+    const gasLimit = web3.utils.toHex(gasLimitAsInt);
     const gasPrices = await getGasPrices();
     const gasPrice = web3.utils.toHex(web3.utils.toWei(gasPrices.low.toString(), 'gwei'));
+    const balance = await getBalance(from);
+    const valueAsWei = web3.utils.toWei(value, 'ether');
+    value = web3.utils.toHex(valueAsWei);
+    const minBalance = (gasLimitAsInt *
+        parseFloat(web3.utils.toWei(gasPrices.low.toString(), 'gwei'))) + parseFloat(valueAsWei);
+
+    if (parseFloat(balance, 10) < minBalance) {
+        let error = new Error('Insufficient funds for transaction');
+        error.code = 'ER_INSUFFICIENT_FUNDS';
+        throw error;
+    }
+
+    const txCount = await web3.eth.getTransactionCount(from);
+    const nonce = web3.utils.toHex(txCount);
 
     const txData = {
         nonce,

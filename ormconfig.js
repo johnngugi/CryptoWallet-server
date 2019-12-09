@@ -1,10 +1,10 @@
-var { DB_HOST, DB_USER, DB_PASS, DB_NAME } = require('./config');
+var { DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT } = require('./config');
 
 module.exports = {
     'name': 'default',
     'type': 'mysql',
     'host': `${DB_HOST}`,
-    'port': 3306,
+    'port': `${DB_PORT}`,
     'username': `${DB_USER}`,
     'password': `${DB_PASS}`,
     'database': `${DB_NAME}`,

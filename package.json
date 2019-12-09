@@ -6,7 +6,8 @@
     "start": "node ./bin/www",
     "dev": "nodemon ./bin/www",
     "lint": "eslint --ignore-path .gitignore --fix .",
-    "test": "./node_modules/mocha/bin/mocha --exit test/lifecycle.test.js test/integration/**/*.test.js"
+    "test": "./node_modules/mocha/bin/mocha --exit test/lifecycle.test.js test/integration/**/*.test.js",
+    "migrate": "typeorm migration:run"
   },
   "dependencies": {
     "@types/node": "^12.12.14",

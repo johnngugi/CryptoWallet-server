@@ -1,0 +1,26 @@
+version: "3"
+services:
+    cryptowallet-server:
+        build:
+            context: .
+        image: johnngugi/cryptowallet-server
+        # restart: on-failure
+        env_file: .env
+        depends_on:
+            - db
+        ports:
+            - "3000:3000"
+        command: sh -c './wait-for -t 300 db:3306 -- npm run dev'
+    db:
+        image: mysql
+        container_name: db
+        env_file: .env
+        environment:
+            - MYSQL_USER=$DB_USER
+            - MYSQL_PASSWORD=$DB_PASS
+            - MYSQL_DATABASE=$DB_NAME
+            - MYSQL_ROOT_PASSWORD=$DB_PASS
+        ports:
+            - "3308:3306"
+        volumes:
+            - "./tmp/mysql/data:/var/lib/mysql"

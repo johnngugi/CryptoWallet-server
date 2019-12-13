@@ -1,12 +1,12 @@
 module.exports = {
     currencySeed: [
         {
-            name: "Ethereum",
-            shortName: "ETH"
+            name: 'Ethereum',
+            shortName: 'ETH'
         },
         {
-            name: "Bitcoin",
-            shortName: "BTC"
+            name: 'Bitcoin',
+            shortName: 'BTC'
         }
     ]
 };

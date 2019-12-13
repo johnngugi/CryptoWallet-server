@@ -4,11 +4,11 @@ import { currencySeed } from "./currency.seed";
 
 export class SeedCurrency1576261242869 implements MigrationInterface {
 
-    public async up(queryRunner: QueryRunner): Promise<any> {
+    public async up(_queryRunner: QueryRunner): Promise<any> {
         await createDbRecord('currency', currencySeed);
     }
 
-    public async down(queryRunner: QueryRunner): Promise<any> {
+    public async down(_queryRunner: QueryRunner): Promise<any> {
     }
 
 }

@@ -41,7 +41,7 @@ var currency_seed_1 = require("./currency.seed");
 var SeedCurrency1576261242869 = /** @class */ (function () {
     function SeedCurrency1576261242869() {
     }
-    SeedCurrency1576261242869.prototype.up = function (queryRunner) {
+    SeedCurrency1576261242869.prototype.up = function (_queryRunner) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
@@ -53,7 +53,7 @@ var SeedCurrency1576261242869 = /** @class */ (function () {
             });
         });
     };
-    SeedCurrency1576261242869.prototype.down = function (queryRunner) {
+    SeedCurrency1576261242869.prototype.down = function (_queryRunner) {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 return [2 /*return*/];

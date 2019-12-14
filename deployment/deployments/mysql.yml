@@ -27,5 +27,6 @@ spec:
               mountPath: /var/lib/mysql
       volumes:
         - name: mysql-persistent-storage
-          persistentVolumeClaim:
-            claimName: mysql-pv-claim
+          gcePersistentDisk:
+            pdName: mysql-disk
+            fsType: ext4

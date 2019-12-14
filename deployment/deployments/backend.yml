@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cryptowallet-server-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cryptowallet-server
+      name: app-pod
+  template:
+    metadata:
+      labels:
+        app: cryptowallet-server
+        name: app-pod
+    spec:
+      containers:
+        - name: cryptowallet-server
+          image: johnngugi/cryptowallet-server
+          lifecycle:
+            postStart:
+              exec:
+                command: ["npm", "run", "migrate"]
+          envFrom:
+            - secretRef:
+                name: app-secrets
+            - secretRef:
+                name: db-config
+            - configMapRef:
+                name: app-config
+          ports:
+            - containerPort: 3000

@@ -11,20 +11,23 @@ module.exports = {
         user.emailAddress = req.body.emailAddress;
         user.password = req.body.password;
 
-        const hashedPassword = await passwords.hashPassword(user.password);
-        user.password = hashedPassword;
-
         let result;
         try {
+            const hashedPassword = await passwords.hashPassword(user.password);
+            user.password = hashedPassword;
             result = await user.save();
         } catch (error) {
-            switch (error.code) {
-                case 'ER_DUP_ENTRY':
-                    return res.status(500).send({ error: 'Email already exists' });
-                default:
-                    console.error(error);
-                    return res.status(500).send('Server error');
+            if (error.code) {
+                switch (error.code) {
+                    case 'ER_DUP_ENTRY':
+                        return res.status(500).send({ error: 'Email already exists' });
+                    default:
+                        console.error(error);
+                        return res.status(500).send('Server error');
+                }
             }
+            console.error(error);
+            return res.status(500).send('Server error');
         }
 
         try {

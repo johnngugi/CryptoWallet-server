@@ -4,9 +4,15 @@ services:
         build:
             context: .
         image: johnngugi/cryptowallet-server
+        container_name: cryptowallet-server
+        volumes:
+            - ./application:/home/node/app/
+            - /home/node/app/node_modules
         env_file: .env
         ports:
             - "3000:3000"
+        networks:
+            - app-network
         command: sh -c './wait-for -t 300 db:3306 -- npm run migrate && npm run dev'
         depends_on:
             - db
@@ -23,3 +29,8 @@ services:
             - "3308:3306"
         volumes:
             - "./tmp/mysql/data:/var/lib/mysql"
+        networks:
+            - app-network
+networks:
+    app-network:
+        driver: bridge

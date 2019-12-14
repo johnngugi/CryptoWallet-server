@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node ./bin/www",
     "dev": "nodemon ./bin/www",
-    "lint": "eslint --ignore-path .gitignore --fix .",
+    "lint": "eslint --ignore-path ../.gitignore --ignore-pattern migrations/ --fix .",
     "test": "./node_modules/mocha/bin/mocha --exit test/lifecycle.test.js test/integration/**/*.test.js",
     "migrate": "typeorm migration:run"
   },
@@ -19,6 +19,7 @@
     "debug": "~2.6.9",
     "ethereumjs-tx": "^2.1.1",
     "express": "~4.16.1",
+    "husky": "^3.1.0",
     "joi": "^14.3.1",
     "joi-password-complexity": "^3.1.0",
     "jsonwebtoken": "^8.5.1",
@@ -41,12 +42,13 @@
     "lint-staged": "^9.5.0",
     "mocha": "^6.2.2",
     "nodemon": "^2.0.1",
-    "sinon": "^7.5.0",
-    "yorkie": "^2.0.0"
+    "sinon": "^7.5.0"
   },
-  "gitHooks": {
-    "pre-commit": "lint-staged",
-    "pre-push": "npm run test"
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm run test"
+    }
   },
   "lint-staged": {
     "*.{js}": [

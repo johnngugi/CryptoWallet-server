@@ -1,29 +1,29 @@
-FROM node:12.13.1 as builder
+FROM node:alpine as builder
 
 RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
 WORKDIR /home/node/app
 
-COPY package*.json ./
+COPY application/package*.json ./
 
-RUN apt-get -q update && apt-get -qy install netcat
+RUN apk add --no-cache --virtual deps \
+    python \
+    build-base \
+    && npm install \
+    && apk del deps
 
-USER node
-
-RUN npm install
-
-FROM node:12.13.1-alpine
+FROM node:alpine as app
 
 RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
 WORKDIR /home/node/app
 
-COPY --chown=node:node . .
-## Copy built node modules and binaries
+COPY --chown=node:node ./application .
+
 COPY --from=builder /home/node/app/node_modules ./node_modules
 
-USER node
-
 EXPOSE 3000
+
+USER node
 
 CMD [ "npm", "run", "start" ]

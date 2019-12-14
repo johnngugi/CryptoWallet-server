@@ -17,6 +17,10 @@ spec:
       containers:
         - name: cryptowallet-server
           image: johnngugi/cryptowallet-server
+          lifecycle:
+            postStart:
+              exec:
+                command: ["npm", "run", "migrate"]
           envFrom:
             - secretRef:
                 name: app-secrets

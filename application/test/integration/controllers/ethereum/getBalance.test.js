@@ -1,26 +1,14 @@
 const { createConnection } = require('typeorm');
 const sinon = require('sinon');
-const userProvider = require('../../../fixtures/user');
-const currenciesProvider = require('../../../fixtures/currency');
-const { web3 } = require('../../../../currencies/ethereum');
+const passport = require('passport');
+const { currenciesProvider, userProvider } = require('../../../fixtures');
+const { web3, createWallet } = require('../../../../currencies/ethereum');
 const { createDbRecord } = require('../../../utils');
 
-const registerUser = async () => {
-    const user = userProvider.getRecord();
-    return chai.request(app)
-        .post('/api/auth/register')
-        .send({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            emailAddress: user.emailAddress,
-            password: user.password,
-            password_confirm: user.password
-        });
-};
-
 describe('Ethereum get balance controller', () => {
+
     let connection;
-    let bearerToken;
+    let user;
     before(async function () {
         connection = await createConnection({
             'type': 'sqlite',
@@ -35,10 +23,13 @@ describe('Ethereum get balance controller', () => {
         await connection.query('PRAGMA foreign_keys=OFF');
         await connection.synchronize();
 
+        user = userProvider.getRecord({ id: 1 });
         const currencies = currenciesProvider.getRecords();
-        let results = await Promise.all([createDbRecord('currency', currencies), registerUser()]);
-        let token = results[1].body.user.token;
-        bearerToken = `Bearer ${token}`;
+        await Promise.all([
+            createDbRecord('currency', currencies),
+            createDbRecord('user', user),
+        ]);
+        await createWallet(user);
         await connection.query('PRAGMA foreign_keys=ON');
     });
 
@@ -47,10 +38,15 @@ describe('Ethereum get balance controller', () => {
     });
 
     beforeEach(() => {
+        sinon.stub(passport, 'authenticate').callsFake((strategy, callback) => {
+            callback(null, user);
+            return () => { };
+        });
         this.web3 = sinon.stub(web3.eth, 'getBalance').resolves('1000000000000');
     });
 
     afterEach(() => {
+        passport.authenticate.restore();
         this.web3.restore();
     });
 
@@ -58,13 +54,17 @@ describe('Ethereum get balance controller', () => {
 
         it('should respond with status 200 on successful request', async () => {
             const res = await chai.request(app)
-                .get('/api/eth/balance')
-                .set('Authorization', bearerToken);
+                .get('/api/eth/balance');
 
             expect(res).to.have.status(200);
         });
 
         it('should respond with 403 when unauthorized', async () => {
+            passport.authenticate.restore();
+            sinon.stub(passport, 'authenticate').callsFake((strategy, callback) => {
+                callback(new Error('unauthenticated'), null);
+                return () => { };
+            });
             const res = await chai.request(app)
                 .get('/api/eth/balance');
 
@@ -73,8 +73,7 @@ describe('Ethereum get balance controller', () => {
 
         it('should respond with json object on successful request', async () => {
             const res = await chai.request(app)
-                .get('/api/eth/balance')
-                .set('Authorization', bearerToken);
+                .get('/api/eth/balance');
 
             expect(res.body).to.be.a('object');
             expect(res.body).to.have.property('currency');

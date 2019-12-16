@@ -20,7 +20,7 @@ jobs:
             - v1-{{ .Branch }}
       - run:
           name: Create Image Tag
-          command: echo export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}
+          command: echo export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME} >> $BASH_ENV
       - run:
           name: Load Docker image layer cache
           command: |

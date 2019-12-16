@@ -1,0 +1,99 @@
+defaults: &defaults
+  environment:
+    APP_NAME: cryptowallet-server
+    GOOGLE_PROJECT_ID: cryptowallet-261720
+    GOOGLE_COMPUTE_ZONE: europe-west2-a
+    CLUSTER_NAME: standard-cluster-1
+  working_directory: /home/node/app/
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: google/cloud-sdk
+    <<: *defaults
+    steps:
+      - checkout
+      - setup_remote_docker
+      - restore_cache:
+          keys:
+            - v1-{{ .Branch }}
+      - run:
+          name: Create Image Tag
+          command: echo export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}
+      - run:
+          name: Load Docker image layer cache
+          command: |
+            set +o pipefail
+            docker load -i ~/caches/${APP_NAME}.tar | true
+      - run:
+          name: Build Image
+          command: |
+            docker build --cache-from=${IMAGE_TAG} . -t ${IMAGE_TAG}
+      - run:
+          name: Save Docker image layer cache
+          command: |
+            mkdir -p ~/caches
+            docker save -o ~/caches/${APP_NAME}.tar ${IMAGE_TAG}
+      - save_cache:
+          key: v1-{{ .Branch }}-{{ epoch }}
+          paths:
+            - ~/caches/${APP_NAME}.tar
+      - deploy:
+          name: Push Image to Registry
+          command: |
+            if [ "${CIRCLE_BRANCH}" == "master" ]; then
+              echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+              gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+              gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+              gcloud auth configure-docker
+              docker push ${IMAGE_TAG}
+            fi
+  test:
+    docker:
+      - image: circleci/node
+    working_directory: /home/node/app/
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+      - run:
+          name: npm install
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package-lock.json" }}
+          paths:
+            - ./node_modules
+      - run:
+          name: run tests
+          command: npm run test
+  deploy:
+    docker:
+      - image: google/cloud-sdk
+    <<: *defaults
+    steps:
+      - checkout
+      - deploy:
+          name: Deploy Application
+          command: |
+            echo export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}
+            sed -i.bak "s#gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}#${IMAGE_TAG}#" deployment/deployments/backend.yml
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
+            gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${GOOGLE_COMPUTE_ZONE} --project ${GOOGLE_PROJECT_ID}
+            kubectl apply -f deployment/services/
+            kubectl apply -f deployment/deployments/
+workflows:
+  version: 2
+  build_test_deploy:
+    jobs:
+      - build
+      - test
+      - deploy:
+          requires:
+            - build
+            - test
+          filters:
+            branches:
+              only: master

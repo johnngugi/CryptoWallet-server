@@ -43,7 +43,8 @@ jobs:
           name: Push Image to Registry
           command: |
             if [ "${CIRCLE_BRANCH}" == "master" ]; then
-              echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+              echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
+              gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
               gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
               gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
               gcloud auth configure-docker
@@ -52,21 +53,25 @@ jobs:
   test:
     docker:
       - image: circleci/node
-    working_directory: /home/node/app/
+    working_directory: ~/app
+    environment:
+      JWT_SECRET: secret
     steps:
       - checkout
       - restore_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
+          keys:
+            - dependency-cache-{{ checksum "application/package-lock.json" }}
+            - dependency-cache-
       - run:
           name: npm install
-          command: npm install
+          command: cd application && npm install
       - save_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
+          key: dependency-cache-{{ checksum "application/package-lock.json" }}
           paths:
-            - ./node_modules
+            - application/node_modules
       - run:
           name: run tests
-          command: npm run test
+          command: cd application && npm run test
   deploy:
     docker:
       - image: google/cloud-sdk
@@ -78,10 +83,11 @@ jobs:
           command: |
             echo export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}
             sed -i.bak "s#gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}#${IMAGE_TAG}#" deployment/deployments/backend.yml
-            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
+            gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json
             gcloud --quiet config set project ${GOOGLE_PROJECT_ID}
             gcloud --quiet config set compute/zone ${GOOGLE_COMPUTE_ZONE}
-            gcloud container clusters get-credentials ${CLUSTER_NAME} --zone ${GOOGLE_COMPUTE_ZONE} --project ${GOOGLE_PROJECT_ID}
+            gcloud --quiet container clusters get-credentials ${CLUSTER_NAME} --zone ${GOOGLE_COMPUTE_ZONE} --project ${GOOGLE_PROJECT_ID}
             kubectl apply -f deployment/services/
             kubectl apply -f deployment/deployments/
 workflows:

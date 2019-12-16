@@ -41,9 +41,8 @@ const getWalletBalance = async (userId, currency) => {
     }
 };
 
-const getPrivateKey = async (userId, userPassword, currency) => {
+const getPrivateKey = async (wallet, userPassword) => {
     try {
-        const wallet = await getUserWallet(userId, currency);
         const encryptedKey = wallet.encryptedKey;
         const decryptedKey = await ethereum.getPrivateKey(encryptedKey, userPassword);
         return decryptedKey.privateKey;

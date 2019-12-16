@@ -20,7 +20,7 @@ jobs:
             - v1-{{ .Branch }}
       - run:
           name: Create Image Tag
-          command: echo export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME} >> $BASH_ENV
+          command: echo 'export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}' >> $BASH_ENV
       - run:
           name: Load Docker image layer cache
           command: |
@@ -81,7 +81,8 @@ jobs:
       - deploy:
           name: Deploy Application
           command: |
-            echo export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME} >> $BASH_ENV
+            echo 'export IMAGE_TAG=gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}' >> $BASH_ENV
+            source $BASH_ENV
             sed -i.bak "s#gcr.io/${GOOGLE_PROJECT_ID}/${APP_NAME}#${IMAGE_TAG}#" deployment/deployments/backend.yml
             echo $GCLOUD_SERVICE_KEY | base64 --decode --ignore-garbage > ${HOME}/gcloud-service-key.json
             gcloud auth activate-service-account --key-file ${HOME}/gcloud-service-key.json

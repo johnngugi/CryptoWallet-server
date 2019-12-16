@@ -5,7 +5,7 @@ module.exports = {
     async send(req, res) {
         try {
             const wallet = await getUserWallet(req.user.id, 'ETH');
-            const privateKey = await getPrivateKey(req.user.id, req.user.password, 'ETH');
+            const privateKey = await getPrivateKey(wallet, req.user.password);
             const txHash = await sendValue(wallet.address, req.body.to, req.body.value, privateKey);
             return res.send({
                 transactionHash: txHash

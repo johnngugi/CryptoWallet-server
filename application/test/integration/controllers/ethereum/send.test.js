@@ -1,28 +1,15 @@
 const { createConnection } = require('typeorm');
 const sinon = require('sinon');
 const axios = require('axios');
-const userProvider = require('../../../fixtures/user');
-const currenciesProvider = require('../../../fixtures/currency');
-const { web3 } = require('../../../../currencies/ethereum');
+const passport = require('passport');
+const { currenciesProvider, userProvider } = require('../../../fixtures');
+const { web3, createWallet } = require('../../../../currencies/ethereum');
 const { createDbRecord } = require('../../../utils');
-
-const registerUser = async () => {
-    const user = userProvider.getRecord();
-    return chai.request(app)
-        .post('/api/auth/register')
-        .send({
-            firstName: user.firstName,
-            lastName: user.lastName,
-            emailAddress: user.emailAddress,
-            password: user.password,
-            password_confirm: user.password
-        });
-};
 
 describe('Ethereum send ethereum controller', () => {
 
     let connection;
-    let bearerToken;
+    let user;
     before(async function () {
         connection = await createConnection({
             'type': 'sqlite',
@@ -37,10 +24,13 @@ describe('Ethereum send ethereum controller', () => {
         await connection.query('PRAGMA foreign_keys=OFF');
         await connection.synchronize();
 
+        user = userProvider.getRecord({ id: 1 });
         const currencies = currenciesProvider.getRecords();
-        let results = await Promise.all([createDbRecord('currency', currencies), registerUser()]);
-        const token = results[1].body.user.token;
-        bearerToken = `Bearer ${token}`;
+        await Promise.all([
+            createDbRecord('currency', currencies),
+            createDbRecord('user', user),
+        ]);
+        await createWallet(user);
         await connection.query('PRAGMA foreign_keys=ON');
     });
 
@@ -49,6 +39,10 @@ describe('Ethereum send ethereum controller', () => {
     });
 
     beforeEach(() => {
+        sinon.stub(passport, 'authenticate').callsFake((strategy, callback) => {
+            callback(null, user);
+            return () => { };
+        });
         this.gasPrices = sinon.stub(axios, 'get').resolves({
             data: {
                 safeLow: 10,
@@ -63,6 +57,7 @@ describe('Ethereum send ethereum controller', () => {
     });
 
     afterEach(() => {
+        passport.authenticate.restore();
         this.getBalance.restore();
         this.transactionCount.restore();
         this.sendSignedTransaction.restore();
@@ -74,7 +69,6 @@ describe('Ethereum send ethereum controller', () => {
         it('should respond with status 200 on success', async () => {
             const res = await chai.request(app)
                 .post('/api/eth/send')
-                .set('Authorization', bearerToken)
                 .send({
                     value: '0.01',
                     to: '0xa45C6d521BaEE7C0fDfEA932a3Cca5f537410d43'
@@ -84,6 +78,12 @@ describe('Ethereum send ethereum controller', () => {
         });
 
         it('should respond with status 403 if unauthorized', async () => {
+            passport.authenticate.restore();
+            sinon.stub(passport, 'authenticate').callsFake((strategy, callback) => {
+                callback(new Error('unauthenticated'), null);
+                return () => { };
+            });
+
             const res = await chai.request(app)
                 .post('/api/eth/send')
                 .send({
@@ -98,15 +98,10 @@ describe('Ethereum send ethereum controller', () => {
             const req = chai.request(app).keepOpen();
 
             const responses = await Promise.all([
-                req.post('/api/eth/send').set('Authorization', bearerToken),
-                req.post('/api/eth/send').set('Authorization', bearerToken)
-                    .send({
-                        value: '0.01'
-                    }),
-                req.post('/api/eth/send').set('Authorization', bearerToken)
-                    .send({ to: '0xa45C6d521BaEE7C0fDfEA932a3Cca5f537410d43' }),
-                req.post('/api/eth/send').set('Authorization', bearerToken)
-                    .send({ to: '0xa45' })
+                req.post('/api/eth/send'),
+                req.post('/api/eth/send').send({ value: '0.01' }),
+                req.post('/api/eth/send').send({ to: '0xa45C6d521BaEE7C0fDfEA932a3Cca5f537410d43' }),
+                req.post('/api/eth/send').send({ to: '0xa45' })
             ]);
 
             expect(responses[0]).to.have.status(400);
